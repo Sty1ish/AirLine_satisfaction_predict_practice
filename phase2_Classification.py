@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-path = r'C:\Users\Nyoths\Desktop\프로젝트 관련\동아리 2월 pj - 항공사'
+path = r'D:\Github 작업용\AirLine_satisfaction_predict_practice'
 os.chdir(path)
 
 train = pd.read_csv('train.csv', index_col = 'id')
@@ -252,10 +252,87 @@ print(f'SVM model4 confusion_matrix \n {confusion_matrix(y_valid, model_svm4.pre
 
 
 #%%
-# 네이브 베이즈
+# 사이킷런 베이즈안.
+# 나이브 베이즈 = 가우시안NB
+# 나무기반 모델이 아니니까, ONEHOT 인코딩 한것을 사용.
 
-# 베이스 라인.
-# https://dacon.io/competitions/official/235871/codeshare/4531?page=1&dtype=recent
+# 이거 따라 학습해볼꺼야.
+# https://ichi.pro/ko/naive-bayes-bunlyugi-paisseon-eseo-seong-gongjeog-eulo-sayonghaneun-bangbeob-260547389509737
+
+# https://datascienceschool.net/03%20machine%20learning/11.02%20%EB%82%98%EC%9D%B4%EB%B8%8C%EB%B2%A0%EC%9D%B4%EC%A6%88%20%EB%B6%84%EB%A5%98%EB%AA%A8%ED%98%95.html#id7
+
+# 이거 두개 완료하고 난 공부 마칠래.
+
+
+from sklearn.naive_bayes import GaussianNB
+
+model_GB3 = GaussianNB()
+model_GB3.fit(X_train,y_train)
+model_GB3.score(X_valid, y_valid)
+
+# 그래 보통은 이런식으로 사용하면 되지.
+
+
+
+## 이건 왜 안돌아갈까?
+
+model_GB1 = Pipeline([
+    ('scaleing', Scaler1),
+    ('GaussianNB', GaussianNB())
+    ])
+
+model_GB2 = Pipeline([
+    ('scaleing', Scaler3),
+    ('GaussianNB', GaussianNB())
+    ])
+
+
+# 모델 1-2 적합.
+model_GB1.fit(X_train,y_train)
+model_GB2.fit(X_train,y_train)
+
+print('GaussianNB(naive bayes) Model')
+# 모델 1 ACC
+print(f'OneHot + MinMax   trainset score : {model_GB1.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_GB1.score(X_valid, y_valid)}')
+# 모델2 ACC
+print(f'OneHot + Standard trainset score : {model_GB2.score(X_train, y_train)} \t OneHot + Standard valid score : {model_GB2.score(X_valid, y_valid)}')
+
+# 오차행렬
+from sklearn.metrics import confusion_matrix
+
+print(f'GaussianNB(naive bayes) model1 confusion_matrix \n {confusion_matrix(y_valid, model_GB1.predict(X_valid))}')
+print(f'GaussianNB(naive bayes) model2 confusion_matrix \n {confusion_matrix(y_valid, model_GB2.predict(X_valid))}')
+
+### 그외 참조사항 ###
+# 다변수 나이브 베이즈는 다음과 같이 실행한다.
+
+from sklearn.naive_bayes import MultinomialNB 
+model_GB3 = Pipeline([
+    ('scaleing', Scaler1),
+    ('LinearSVC', LinearSVC())
+    ])
+
+model_GB4 = Pipeline([
+    ('scaleing', Scaler3),
+    ('LinearSVC', LinearSVC())
+    ])
+
+# 모델 1-2 적합.
+model_GB1.fit(X_train,y_train)
+model_GB2.fit(X_train,y_train)
+
+print('GaussianNB(naive bayes) Model')
+# 모델 1 ACC
+print(f'OneHot + MinMax   trainset score : {model_GB1.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_GB1.score(X_valid, y_valid)}')
+# 모델2 ACC
+print(f'OneHot + Standard trainset score : {model_GB2.score(X_train, y_train)} \t OneHot + Standard valid score : {model_GB2.score(X_valid, y_valid)}')
+
+# 오차행렬
+from sklearn.metrics import confusion_matrix
+
+print(f'GaussianNB(naive bayes) model1 confusion_matrix \n {confusion_matrix(y_valid, model_GB1.predict(X_valid))}')
+print(f'GaussianNB(naive bayes) model2 confusion_matrix \n {confusion_matrix(y_valid, model_GB2.predict(X_valid))}')
+
 
 #%%
 # CatBoost Classifier
@@ -408,13 +485,167 @@ model.predict(test_X)
 
 #%%
 # 결정 나무 모델(decision Tree)
+# 이건 개인적으로 공부해야 할것같아서 진행함.
+# 베이즈 최적화 이론(Grid Search, Random Search의 단점을 보완하기 위해 사용.)
+# 베이스 라인에 기술되어진 내용임.
+# https://dacon.io/competitions/official/235871/codeshare/4531?page=1&dtype=recent
+
+# 본문 중 내용.
+# Bayesian Optimization은 보통
+# "Gausain Process"라는 통계학을 기반으로 만들어진 모델로, 여러개의 하이퍼 파라미터들에 대해서,
+# "Aqusition Fucntion"을 적용했을 때,
+# "가장 큰 값"이 나올 확률이 높은 지점을 찾아냅니다. 자세한 수식과 증명은 생략하겠습니다.
+#우리가 다룰 Bayesian Optimization 패키지에서는 다음과 같은 단계가 필요합니다.
+# 변경할 하이퍼 파라미터의 범위를 설정한다.
+# Bayesian Optimization 패키지를 통해, 하이퍼 파라미터의 범위 속 값들을 랜덤하게 가져온다.
+# 처음 R번은 정말 Random하게 좌표를 꺼내 성능을 확인한다.
+# 이후 B번은 Bayesian Optimization을 통해 B번만큼 최적의 값을 찾는다.
+
+# 즉. 모든 경우를 다 테스트 후에, 최적을 고르는 것이 아닌, 최적의 값을 찾아나가 수렴시키는 방법.
+
+from sklearn.tree import DecisionTreeClassifier
+from bayes_opt import BayesianOptimization
+from sklearn.metrics import accuracy_score
+
+def bo(max_depth, min_samples_split): # 함수에 들어가는 인자 = 위에서 만든 함수의 key값들
+    params = { # 함수 속 인자를 통해 받아와 새롭게 하이퍼파라미터 딕셔너리 생성
+              'max_depth' : int(round(max_depth)),
+               'min_samples_split' : int(round(min_samples_split)),      
+              }
+    clf = DecisionTreeClassifier(**params) # 그 딕셔너리를 바탕으로 모델 생성
+
+    X_train, X_valid, y_train, y_valid = train_test_split(train,target,test_size = 0.2, ) # train_test_split을 통해 데이터 train-valid 나누기
+
+    clf.fit(X_train,y_train) # 모델 학습
+    score = accuracy_score(y_valid, clf.predict(X_valid)) # 모델 성능 측정
+    return score # 모델의 점수 반환
 
 
+# 의사결정나무의 하이퍼 파라미터의 범위를 dictionary 형태로 지정
+## Key는 의사결정나무의 hyperparameter 이름이고, value는 탐색할 범위
+parameter_bounds = {
+                      'max_depth' : (1,3), # 나무의 깊이
+                      'min_samples_split' : (10, 30), # 데이터가 분할하는데 필요한 샘플 데이터의 수
+                      }
+
+
+# "BO"라는 변수에 Bayesian Optmization을 저장
+BO = BayesianOptimization(f = bo, pbounds = parameter_bounds, random_state = 0)
+
+# Bayesian Optimization 실행
+BO.maximize(init_points = 5, n_iter = 5)
+
+# 하이퍼파라미터의 결과값을 불러와 "max_params"라는 변수에 저장
+max_params = BO.max['params']
+
+max_params['max_depth'] = int(max_params['max_depth'])
+max_params['min_samples_split'] = int(max_params['min_samples_split'])
+print("최적 파라미터: ", max_params)
+
+# Bayesian Optimization의 결과를 "BO_tuend"라는 변수에 저장
+BO_tuned = DecisionTreeClassifier(**max_params)
+BO_tuned.fit(train, target)
+
+
+print('모든 데이터로 valid를 평가했으니 옳은 결과는 아니지만')
+print(f'베이즈안 최적화+결정나무 정확도 : {BO_tuned.score(X_valid, y_valid)}')
 
 #%%
 # 랜덤 포레스트
 
 
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestClassifier
+
+
+model_RF1 = Pipeline([
+    ('scaleing', Scaler1),
+    ('RandomForest', RandomForestClassifier())
+    ])
+
+model_RF2 = Pipeline([
+    ('scaleing', Scaler2),
+    ('RandomForest', RandomForestClassifier())
+    ])
+
+model_RF3 = Pipeline([
+    ('scaleing', Scaler3),
+    ('RandomForest', RandomForestClassifier())
+    ])
+
+model_RF4 = Pipeline([
+    ('scaleing', Scaler4),
+    ('RandomForest', RandomForestClassifier())
+    ])
+
+# 모델 1-2 적합.
+model_RF1.fit(X_train,y_train)
+model_RF2.fit(X_train,y_train)
+model_RF3.fit(X_train,y_train)
+model_RF4.fit(X_train,y_train)
+
+print('RandomForest Model')
+# 모델 1 ACC
+print(f'OneHot + MinMax   trainset score : {model_RF1.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_RF1.score(X_valid, y_valid)}')
+print(f'Label + MinMax   trainset score : {model_RF2.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_RF2.score(X_valid, y_valid)}')
+print(f'OneHot + Standard trainset score : {model_RF3.score(X_train, y_train)} \t OneHot + Standard valid score : {model_RF3.score(X_valid, y_valid)}')
+print(f'Label + Standard trainset score : {model_RF4.score(X_train, y_train)} \t OneHot + Standard valid score : {model_RF4.score(X_valid, y_valid)}')
+
+
+# 오차행렬로 보자.
+from sklearn.metrics import confusion_matrix
+# 모델 1-4
+print(f'RF model1 confusion_matrix \n {confusion_matrix(y_valid, model_RF1.predict(X_valid))}')
+print(f'RF model2 confusion_matrix \n {confusion_matrix(y_valid, model_RF2.predict(X_valid))}')
+print(f'RF model3 confusion_matrix \n {confusion_matrix(y_valid, model_RF3.predict(X_valid))}')
+print(f'RF model4 confusion_matrix \n {confusion_matrix(y_valid, model_RF4.predict(X_valid))}')
+
 
 #%%
 # 다항 로지스틱 회귀
+from sklearn.linear_model import LogisticRegression
+
+model_logi1 = Pipeline([
+    ('scaleing', Scaler1),
+    ('logistic reg', LogisticRegression())
+    ])
+
+model_logi2 = Pipeline([
+    ('scaleing', Scaler2),
+    ('logistic reg', LogisticRegression())
+    ])
+
+model_logi3 = Pipeline([
+    ('scaleing', Scaler3),
+    ('logistic reg', LogisticRegression())
+    ])
+
+model_logi4 = Pipeline([
+    ('scaleing', Scaler4),
+    ('logistic reg', LogisticRegression())
+    ])
+
+
+# 모델 1-2 적합.
+model_logi1.fit(X_train,y_train)
+model_logi2.fit(X_train,y_train)
+model_logi3.fit(X_train,y_train)
+model_logi4.fit(X_train,y_train)
+
+print('logistic reg Model')
+# 모델 1 ACC
+print(f'OneHot + MinMax   trainset score : {model_logi1.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_logi1.score(X_valid, y_valid)}')
+print(f'Label + MinMax   trainset score : {model_logi2.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_logi2.score(X_valid, y_valid)}')
+print(f'OneHot + Standard trainset score : {model_logi3.score(X_train, y_train)} \t OneHot + Standard valid score : {model_logi3.score(X_valid, y_valid)}')
+print(f'Label + Standard trainset score : {model_logi4.score(X_train, y_train)} \t OneHot + Standard valid score : {model_logi4.score(X_valid, y_valid)}')
+
+
+# 오차행렬로 보자.
+from sklearn.metrics import confusion_matrix
+# 모델 1-4
+print(f'logistic reg model1 confusion_matrix \n {confusion_matrix(y_valid, model_logi1.predict(X_valid))}')
+print(f'logistic reg model2 confusion_matrix \n {confusion_matrix(y_valid, model_logi2.predict(X_valid))}')
+print(f'logistic reg model3 confusion_matrix \n {confusion_matrix(y_valid, model_logi3.predict(X_valid))}')
+print(f'logistic reg model4 confusion_matrix \n {confusion_matrix(y_valid, model_logi4.predict(X_valid))}')
+
+# 로지스틱 또한, factor형을 ONEHOT으로 만들때 성능이 더 우수하다.
