@@ -263,7 +263,7 @@ print(f'SVM model4 confusion_matrix \n {confusion_matrix(y_valid, model_svm4.pre
 
 # 이거 두개 완료하고 난 공부 마칠래.
 
-
+'''
 from sklearn.naive_bayes import GaussianNB
 
 model_GB3 = GaussianNB()
@@ -327,21 +327,23 @@ print(f'OneHot + MinMax   trainset score : {model_GB1.score(X_train, y_train)} \
 # 모델2 ACC
 print(f'OneHot + Standard trainset score : {model_GB2.score(X_train, y_train)} \t OneHot + Standard valid score : {model_GB2.score(X_valid, y_valid)}')
 
+
 # 오차행렬
 from sklearn.metrics import confusion_matrix
 
 print(f'GaussianNB(naive bayes) model1 confusion_matrix \n {confusion_matrix(y_valid, model_GB1.predict(X_valid))}')
 print(f'GaussianNB(naive bayes) model2 confusion_matrix \n {confusion_matrix(y_valid, model_GB2.predict(X_valid))}')
 
+'''
 
 #%%
 # CatBoost Classifier
 from catboost import CatBoostClassifier
 from sklearn.metrics import roc_auc_score
 
-model_catboost = CatBoostClassifier()
+model_catboost = CatBoostClassifier(cat_features=np.where(train.dtypes != np.int64)[0])
 
-model_catboost.fit(X_train, y_train, cat_features=np.where(train.dtypes != np.int64)[0], eval_set=(X_valid, y_valid))
+model_catboost.fit(X_train, y_train, eval_set=(X_valid, y_valid))
 # int64가 아닌 모든 행을 cat_features로 넣어서, 범주형으로 인식시켜 훈련시켜준다.
 # 아니면 숫자형 리스트, 문자열 리스트로 반환해도 좋음. 위에서 나온 label_col이 여기에 쓰일 용도였음.
 
@@ -359,6 +361,7 @@ print("AUC score of CatBoost: {:.3f}".format(cb_auc))
 # 성능이 훌륭하다.
 
 #%%
+
 # XGB Classifier
 import xgboost as xgb
 from xgboost import XGBClassifier
@@ -386,102 +389,9 @@ print(f'OneHot + Standard trainset score : {model_xgbc2.score(X_train, y_train)}
 # 오차행렬로 보자.
 from sklearn.metrics import confusion_matrix
 # 모델 1-2
-print(f'SVM model1 confusion_matrix \n {confusion_matrix(y_valid, model_xgbc1.predict(X_valid))}')
-print(f'SVM model1 confusion_matrix \n {confusion_matrix(y_valid, model_xgbc2.predict(X_valid))}')
+print(f'XGBoost_Classifier model1 confusion_matrix \n {confusion_matrix(y_valid, model_xgbc1.predict(X_valid))}')
+print(f'XGBoost_Classifier model2 confusion_matrix \n {confusion_matrix(y_valid, model_xgbc2.predict(X_valid))}')
 
-
-
-'''
-import xgboost as xgb
-
-# 반드시 튜닝해야할 파라미터는  min_child_weight / max_depth / gamma
-
-xgb.XGBClassifier(
-    
-    # General Parameter
-    booster='gbtree' # 트리,회귀(gblinear) 트리가 항상 
-                     # 더 좋은 성능을 내기 때문에 수정할 필요없다고한다.
-    
-    silent=True  # running message출력안한다.
-                 # 모델이 적합되는 과정을 이해하기위해선 False으로한다.
-    
-    min_child_weight=10   # 값이 높아지면 under-fitting 되는 
-                          # 경우가 있다. CV를 통해 튜닝되어야 한다.
-    
-    max_depth=8     # 트리의 최대 깊이를 정의함. 
-                    # 루트에서 가장 긴 노드의 거리.
-                    # 8이면 중요변수에서 결론까지 변수가 9개거친다.
-                    # Typical Value는 3-10. 
-    
-    gamma =0    # 노드가 split 되기 위한 loss function의 값이
-                # 감소하는 최소값을 정의한다. gamma 값이 높아질 수록 
-                # 알고리즘은 보수적으로 변하고, loss function의 정의
-                #에 따라 적정값이 달라지기때문에 반드시 튜닝.
-    
-    nthread =4    # XGBoost를 실행하기 위한 병렬처리(쓰레드)
-                  #갯수. 'n_jobs' 를 사용해라.
-    
-    colsample_bytree=0.8   # 트리를 생성할때 훈련 데이터에서 
-                           # 변수를 샘플링해주는 비율. 보통0.6~0.9
-    
-    colsample_bylevel=0.9  # 트리의 레벨별로 훈련 데이터의 
-                           #변수를 샘플링해주는 비율. 보통0.6~0.9
-    
-    n_estimators =(int)   #부스트트리의 양
-                          # 트리의 갯수. 
-    
-    objective = 'reg:linear','binary:logistic','multi:softmax',
-                'multi:softprob'  # 4가지 존재.
-            # 회귀 경우 'reg', binary분류의 경우 'binary',
-            # 다중분류경우 'multi'- 분류된 class를 return하는 경우 'softmax'
-            # 각 class에 속할 확률을 return하는 경우 'softprob'
-    
-    random_state =  # random number seed.
-                    # seed 와 동일.
-)
-
-
-
-
-XGBClassifier.fit(
-    
-    X (array_like)     # Feature matrix ( 독립변수)
-                       # X_train
-    
-    Y (array)          # Labels (종속변수)
-                       # Y_train
-    
-    eval_set           # 빨리 끝나기 위해 검증데이터와 같이써야한다.  
-                       # =[(X_train,Y_train),(X_vld, Y_vld)]
- 
-    eval_metric = 'rmse','error','mae','logloss','merror',
-                'mlogloss','auc'  
-              # validation set (검증데이터)에 적용되는 모델 선택 기준.
-              # 평가측정. 
-              # 회귀 경우 rmse ,  분류 -error   이외의 옵션은 함수정의
-    
-    early_stopping_rounds=100,20
-              # 100번,20번 반복동안 최대화 되지 않으면 stop
-)
-
-model=XGBClassifier(booster='gbtree', 
-                    colsample_bylevel=0.9, 
-                    colsample_bytree=0.8, 
-                    gamma=0, 
-                    max_depth=8, 
-                    min_child_weight=3, 
-                    n_estimators=50, 
-                    nthread=4, 
-                    objective='binary:logistic', 
-                    random_state=2, 
-                    silent= True)
-
-model.fit(train_X,train_Y, eval_set=[(val_X,val_Y)],
-             early_stopping_rounds=50,verbos=5)
-
-model.predict(test_X)
-[출처] 파이썬 Scikit-Learn형식 XGBoost 파라미터|작성자 현무
-'''
 
 #%%
 # 결정 나무 모델(decision Tree)
@@ -649,3 +559,115 @@ print(f'logistic reg model3 confusion_matrix \n {confusion_matrix(y_valid, model
 print(f'logistic reg model4 confusion_matrix \n {confusion_matrix(y_valid, model_logi4.predict(X_valid))}')
 
 # 로지스틱 또한, factor형을 ONEHOT으로 만들때 성능이 더 우수하다.
+
+
+#%%
+
+# 모델링 코드 grid_search된거 떼오기.
+
+
+from lightgbm import LGBMClassifier
+
+model_LGBM = LGBMClassifier(learning_rate=0.01, max_bin=300, n_estimators = 1000, num_leaves =16)
+# parms = {'learning_rate' : 0.01, 'max_bin':300, 'n_estimators': 1000, 'num_leaves':16}
+
+model_LGBM.fit(train, target)
+BO_tuned
+#model_logi1 = Pipeline([
+#    ('scaleing', Scaler1),
+#    ('logistic reg', LogisticRegression())
+#    ])
+
+print('LGBM model')
+print(f'trainset score : {model_LGBM.score(X_train, y_train)} \t valid score : {model_LGBM.score(X_valid, y_valid)}')
+
+print(f'LGBM model confusion_matrix \n {confusion_matrix(y_valid, model_LGBM.predict(X_valid))}')
+
+#%%
+
+# 대충 성능좋았던 모델로 앙상블 해보자.
+print('SVM_Linear SVC Model')
+print(f'OneHot + MinMax   trainset score : {model_svm1.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_svm1.score(X_valid, y_valid)}')
+print(f'OneHot + Standard trainset score : {model_svm2.score(X_train, y_train)} \t OneHot + Standard valid score : {model_svm2.score(X_valid, y_valid)}')
+
+print('SVM_SVC Model')
+print(f'OneHot + MinMax   trainset score : {model_svm3.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_svm3.score(X_valid, y_valid)}')
+print(f'OneHot + Standard trainset score : {model_svm4.score(X_train, y_train)} \t OneHot + Standard valid score : {model_svm4.score(X_valid, y_valid)}')
+
+print('Catboost')
+print(f'Non-scale trainset score : {model_catboost.score(X_train, y_train)} \t Non-scale valid score : {model_catboost.score(X_valid, y_valid)}')
+
+print('XGBoost_Classifier Model')
+print(f'OneHot + MinMax   trainset score : {model_xgbc1.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_xgbc1.score(X_valid, y_valid)}')
+print(f'OneHot + Standard trainset score : {model_xgbc2.score(X_train, y_train)} \t OneHot + Standard valid score : {model_xgbc2.score(X_valid, y_valid)}')
+
+print('RandomForest Model')
+print(f'OneHot + MinMax   trainset score : {model_RF1.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_RF1.score(X_valid, y_valid)}')
+print(f'Label + MinMax   trainset score : {model_RF2.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_RF2.score(X_valid, y_valid)}')
+print(f'OneHot + Standard trainset score : {model_RF3.score(X_train, y_train)} \t OneHot + Standard valid score : {model_RF3.score(X_valid, y_valid)}')
+print(f'Label + Standard trainset score : {model_RF4.score(X_train, y_train)} \t OneHot + Standard valid score : {model_RF4.score(X_valid, y_valid)}')
+
+print('logistic reg Model')
+print(f'OneHot + MinMax   trainset score : {model_logi1.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_logi1.score(X_valid, y_valid)}')
+print(f'Label + MinMax   trainset score : {model_logi2.score(X_train, y_train)} \t OneHot + MinMax valid score : {model_logi2.score(X_valid, y_valid)}')
+print(f'OneHot + Standard trainset score : {model_logi3.score(X_train, y_train)} \t OneHot + Standard valid score : {model_logi3.score(X_valid, y_valid)}')
+print(f'Label + Standard trainset score : {model_logi4.score(X_train, y_train)} \t OneHot + Standard valid score : {model_logi4.score(X_valid, y_valid)}')
+
+print('LGBM model')
+print(f'trainset score : {model_LGBM.score(X_train, y_train)} \t valid score : {model_LGBM.score(X_valid, y_valid)}')
+
+###
+from sklearn.ensemble import VotingClassifier
+
+# 하드 보팅
+
+voting_clf = VotingClassifier(
+    estimators = [('svm',model_svm3), ('catboost',model_catboost), ('xgboost',model_xgbc2), ('lgbm',model_LGBM)],
+    voting='hard'
+    )
+
+voting_clf.fit(X_train,y_train)
+
+
+print('앙상블 모델-HARD VOTING')
+print(f'trainset score : {voting_clf.score(X_train, y_train)} \t valid score : {voting_clf.score(X_valid, y_valid)}')
+print(f'앙상블모델 confusion_matrix \n {confusion_matrix(y_valid, voting_clf.predict(X_valid))}')
+
+
+# SVM이 predict_proba()메서드를 지원하지 않는다. => voting hard만 가능.
+# 만약 이렇게 하면 voting = 'soft' 사용 가능하다.
+
+model_svm5 = Pipeline([
+    ('scaleing', Scaler3),
+    ('SVC', SVC(probability=True))
+    ])
+
+
+# ('catboost',model_catboost),
+voting_clf2 = VotingClassifier(
+    estimators = [('svm',model_svm5),('catboost',model_catboost), ('xgboost',model_xgbc2), ('lgbm',model_LGBM)],
+    voting='soft'
+    )
+
+voting_clf2.fit(X_train,y_train)
+
+print('앙상블 모델-Soft Voting')
+print(f'trainset score : {voting_clf2.score(X_train, y_train)} \t valid score : {voting_clf2.score(X_valid, y_valid)}')
+print(f'앙상블모델 confusion_matrix \n {confusion_matrix(y_valid, voting_clf2.predict(X_valid))}')
+
+
+# 성능향상이 없으니, 94% 예측 두개인 catboost, XGboost중 XGboost만 써보자. 글고보니 두모델다 boosting이네
+
+# ('catboost',model_catboost),
+voting_clf3 = VotingClassifier(
+    estimators = [('svm',model_svm5), ('xgboost',model_xgbc2), ('lgbm',model_LGBM)],
+    voting='soft'
+    )
+
+voting_clf3.fit(X_train,y_train)
+
+print('앙상블 모델-Soft Voting V2')
+print(f'trainset score : {voting_clf3.score(X_train, y_train)} \t valid score : {voting_clf3.score(X_valid, y_valid)}')
+print(f'앙상블모델 confusion_matrix \n {confusion_matrix(y_valid, voting_clf3.predict(X_valid))}')
+
+# 결국 최다성능을 내는 녀석이 압도적이면 그게 더 낫다는 결과인건가...?
