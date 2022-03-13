@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 
-path = r'D:\Github 작업용\AirLine_satisfaction_predict_practice'
+path = r'C:\Users\styli\Desktop\github_repository_add\AirLine_satisfaction_predict_practice'
 os.chdir(path)
 
 train = pd.read_csv('train.csv', index_col = 'id')
@@ -54,6 +54,7 @@ test = test.drop(['Departure Delay in Minutes','Arrival Delay in Minutes'],axis=
 
 # 또다른 처리 아이디어 아이디어.
 plt.hist(train.tot_Delay, bins = 80)
+plt.hist(np.log(train.tot_Delay))
 train['tot_Delay'].quantile(q=0.2, interpolation='nearest')
 train['tot_Delay'].quantile(q=0.3, interpolation='nearest')
 train['tot_Delay'].quantile(q=0.4, interpolation='nearest')
@@ -572,7 +573,7 @@ model_LGBM = LGBMClassifier(learning_rate=0.01, max_bin=300, n_estimators = 1000
 # parms = {'learning_rate' : 0.01, 'max_bin':300, 'n_estimators': 1000, 'num_leaves':16}
 
 model_LGBM.fit(train, target)
-BO_tuned
+
 #model_logi1 = Pipeline([
 #    ('scaleing', Scaler1),
 #    ('logistic reg', LogisticRegression())
